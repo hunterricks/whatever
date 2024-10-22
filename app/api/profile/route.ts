@@ -1,70 +1,67 @@
-import NextAuth from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
+import { NextResponse } from 'next/server';
 import { compare } from "bcryptjs";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
+import { verifyToken } from "@/lib/auth";
 
-export const authOptions = {
-  providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" }
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          console.error("Missing credentials");
-          return null;
-        }
+export async function POST(request: Request) {
+  try {
+    await dbConnect();
+    const { email, password } = await request.json();
 
-        try {
-          await dbConnect();
-          const user = await User.findOne({ email: credentials.email });
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Missing credentials' }, { status: 400 });
+    }
 
-          if (!user) {
-            console.error("User not found");
-            return null;
-          }
+    const user = await User.findOne({ email });
 
-          const isPasswordValid = await compare(credentials.password, user.password);
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
 
-          if (!isPasswordValid) {
-            console.error("Invalid password");
-            return null;
-          }
+    const isPasswordValid = await compare(password, user.password);
 
-          return {
-            id: user._id.toString(),
-            email: user.email,
-            name: user.name,
-          };
-        } catch (error) {
-          console.error("Error in authorize function:", error);
-          return null;
-        }
-      }
-    })
-  ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id;
-      }
-      return session;
-    },
-  },
-  pages: {
-    signIn: "/login",
-  },
-  debug: true, // Enable debug messages
-};
+    if (!isPasswordValid) {
+      return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
+    }
 
-const handler = NextAuth(authOptions);
-export { handler as GET, handler as POST };
+    // Generate a token here for authentication
+    const token = generateToken(user);
+
+    const userData = {
+      id: user._id.toString(),
+      email: user.email,
+      name: user.name,
+      token,
+    };
+
+    return NextResponse.json(userData);
+  } catch (error) {
+    console.error("Error in profile route:", error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    const token = request.headers.get('Authorization')?.split(' ')[1];
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+
+    const user = await User.findById(decoded.id).select('-password');
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(user);
+  } catch (error) {
+    console.error("Error in profile GET route:", error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

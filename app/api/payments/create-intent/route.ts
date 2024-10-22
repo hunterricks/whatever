@@ -3,12 +3,18 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Job from '@/models/Job';
 import stripe from '@/lib/stripe';
+import { verifyToken } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const token = request.headers.get('Authorization')?.split(' ')[1];
+    if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
     await dbConnect();
@@ -19,7 +25,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Job not found' }, { status: 404 });
     }
 
-    if (job.postedBy.toString() !== session.user.id) {
+    if (job.postedBy.toString() !== decoded.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

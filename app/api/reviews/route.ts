@@ -2,12 +2,18 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Review from '@/models/Review';
 import Job from '@/models/Job';
+import { verifyToken } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const token = request.headers.get('Authorization')?.split(' ')[1];
+    if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
     await dbConnect();
@@ -24,7 +30,7 @@ export async function POST(request: Request) {
 
     const review = await Review.create({
       ...body,
-      reviewer: session.user.id,
+      reviewer: decoded.id,
     });
 
     return NextResponse.json(review, { status: 201 });

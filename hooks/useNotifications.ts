@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 import { messaging, getToken, onMessage } from '@/lib/firebase';
 import { toast } from 'sonner';
 

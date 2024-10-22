@@ -1,21 +1,25 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
+import { verifyToken } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const token = request.headers.get('Authorization')?.split(' ')[1];
+    if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await dbConnect();
-    const { token } = await request.json();
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
 
-    await User.findByIdAndUpdate(session.user.id, {
-      $addToSet: { fcmTokens: token },
+    await dbConnect();
+    const { fcmToken } = await request.json();
+
+    await User.findByIdAndUpdate(decoded.id, {
+      $addToSet: { fcmTokens: fcmToken },
     });
 
     return NextResponse.json({ message: 'Token registered successfully' });

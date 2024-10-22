@@ -1,13 +1,18 @@
 import { NextResponse } from 'next/server';
-
 import dbConnect from '@/lib/mongodb';
 import Proposal from '@/models/Proposal';
+import { verifyToken } from "@/lib/auth";
 
 export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const token = request.headers.get('Authorization')?.split(' ')[1];
+    if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
     await dbConnect();

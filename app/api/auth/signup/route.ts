@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
+import { generateToken } from "@/lib/auth";
 
 export async function POST(request: Request) {
   try {
@@ -29,7 +30,14 @@ export async function POST(request: Request) {
 
     console.log('New user created:', newUser._id);
 
-    return NextResponse.json({ message: 'User created successfully', userId: newUser._id }, { status: 201 });
+    // Generate a token for the new user
+    const token = generateToken(newUser);
+
+    return NextResponse.json({ 
+      message: 'User created successfully', 
+      userId: newUser._id,
+      token: token
+    }, { status: 201 });
   } catch (error) {
     console.error('Signup error:', error);
     return NextResponse.json({ error: 'Error creating user', details: error.message }, { status: 500 });
