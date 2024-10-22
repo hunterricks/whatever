@@ -1,24 +1,28 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { toast } from "sonner";
 
 export default function Analytics() {
-  const { data: session } = useSession();
+  const { user, checkAuth } = useAuth();
   const [analytics, setAnalytics] = useState(null);
 
   useEffect(() => {
-    if (session) {
+    if (checkAuth()) {
       fetchAnalytics();
     }
-  }, [session]);
+  }, [checkAuth]);
 
   async function fetchAnalytics() {
     try {
-      const response = await fetch('/api/analytics');
+      const response = await fetch('/api/analytics', {
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
       if (!response.ok) throw new Error('Failed to fetch analytics');
       const data = await response.json();
       setAnalytics(data);
