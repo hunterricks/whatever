@@ -3,8 +3,9 @@ import { getToken } from "next-auth/jwt";
 import dbConnect from '@/lib/mongodb';
 import Review from '@/models/Review';
 import Job from '@/models/Job';
+import { NextApiRequest } from 'next/types';
 
-export async function POST(request: Request) {
+export async function POST(request: NextApiRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextApiRequest) {
   try {
     const token = await getToken({ req: request });
     if (!token) {

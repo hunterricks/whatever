@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Proposal from '@/models/Proposal';
 import Job from '@/models/Job';
+import { NextApiRequest } from 'next/types';
 
 export async function GET(
-  request: Request,
+  request: NextApiRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -28,7 +29,7 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: Request,
+  request: NextApiRequest,
   { params }: { params: { id: string } }
 ) {
   try {

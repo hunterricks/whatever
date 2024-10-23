@@ -3,8 +3,9 @@ import dbConnect from '@/lib/mongodb';
 import Job from '@/models/Job';
 import '../../../models/User';  // This ensures the User model is registered
 import { Types } from 'mongoose';
+import { NextApiRequest } from 'next/types';
 
-export async function POST(request: Request) {
+export async function POST(request: NextApiRequest) {
   try {
     await dbConnect();
     const body = await request.json();

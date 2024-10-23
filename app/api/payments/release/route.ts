@@ -3,8 +3,9 @@ import { getToken } from "next-auth/jwt";
 import dbConnect from '@/lib/mongodb';
 import Job from '@/models/Job';
 import stripe from '@/lib/stripe';
+import { NextApiRequest } from 'next/types';
 
-export async function POST(request: Request) {
+export async function POST(request: NextApiRequest) {
   try {
     const token = await getToken({ req: request });
     if (!token) {
