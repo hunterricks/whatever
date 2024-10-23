@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
+import { getToken } from "next-auth/jwt";
 import dbConnect from '@/lib/mongodb';
 import Job from '@/models/Job';
 import stripe from '@/lib/stripe';
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const token = await getToken({ req: request });
+    if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Job not found' }, { status: 404 });
     }
 
-    if (job.postedBy.toString() !== session.user.id) {
+    if (job.postedBy.toString() !== token.sub) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
