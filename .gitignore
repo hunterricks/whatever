@@ -1,4 +1,9 @@
+   # Keep this line if it's in the file
+   **/.DS_Store
+   
+   # Add any other entries that were causing conflicts
 node_modules
+<<<<<<< HEAD
 .next
 
 .vercel
@@ -8,3 +13,5 @@ node_modules
 .DS_Store
 .DS_Store
 **/.DS_Store
+=======
+>>>>>>> d56aa0c17c8493c2a232c0c14ee1581dcaacda5a
