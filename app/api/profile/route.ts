@@ -1,71 +1,57 @@
-import NextAuth from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { compare } from "bcryptjs";
-import dbConnect from "@/lib/mongodb";
-import User from "@/models/User";
+import { NextResponse } from 'next/server';
+import jwt from 'jsonwebtoken';
+import dbConnect from '@/lib/mongodb';
+import User from '@/models/User';
+import { NextRequest } from 'next/server';
 
-const authOptions = {
-  providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" }
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          console.error("Missing credentials");
-          return null;
-        }
+export async function GET(request: NextRequest) {
+  try {
+    const token = request.cookies.get('auth-token')?.value;
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-        try {
-          await dbConnect();
-          const user = await User.findOne({ email: credentials.email });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
 
-          if (!user) {
-            console.error("User not found");
-            return null;
-          }
+    await dbConnect();
+    const user = await User.findById(decoded.userId).select('-password');
 
-          const isPasswordValid = await compare(credentials.password, user.password);
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
 
-          if (!isPasswordValid) {
-            console.error("Invalid password");
-            return null;
-          }
+    return NextResponse.json(user);
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    return NextResponse.json({ error: 'Error fetching user profile' }, { status: 500 });
+  }
+}
 
-          return {
-            id: user._id.toString(),
-            email: user.email,
-            name: user.name,
-          };
-        } catch (error) {
-          console.error("Error in authorize function:", error);
-          return null;
-        }
-      }
-    })
-  ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id;
-      }
-      return session;
-    },
-  },
-  pages: {
-    signIn: "/login",
-  },
-  debug: true,
-};
+export async function PATCH(request: NextRequest) {
+  try {
+    const token = request.cookies.get('auth-token')?.value;
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-const handler = NextAuth(authOptions);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
 
-export { handler as GET, handler as POST };
+    await dbConnect();
+    const body = await request.json();
+
+    const updatedUser = await User.findByIdAndUpdate(
+      decoded.userId,
+      { $set: body },
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!updatedUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(updatedUser);
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    return NextResponse.json({ error: 'Error updating user profile' }, { status: 500 });
+  }
+}

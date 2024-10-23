@@ -8,22 +8,24 @@ const useNotifications = () => {
   const { data: session } = useSession();
 
   useEffect(() => {
-    if (!messaging || !session?.user?.id) return;
+    if (!messaging || !session?.user?.email) return;
 
     const requestPermission = async () => {
       try {
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
-          const token = await getToken(messaging, {
+          const token = messaging ? await getToken(messaging, {
             vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
-          });
-          setFcmToken(token);
-          // Send this token to your server to associate it with the user
-          await fetch('/api/notifications/register-token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token }),
-          });
+          }) : null;
+          if (token) {
+            setFcmToken(token);
+            // Send this token to your server to associate it with the user
+            await fetch('/api/notifications/register-token', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token }),
+            });
+          }
         }
       } catch (error) {
         console.error('Error requesting notification permission:', error);
@@ -32,14 +34,14 @@ const useNotifications = () => {
 
     requestPermission();
 
-    const unsubscribe = onMessage(messaging, (payload) => {
+    const unsubscribe = messaging ? onMessage(messaging, (payload) => {
       toast.info(payload.notification?.title, {
         description: payload.notification?.body,
       });
-    });
+    }) : () => {};
 
     return () => unsubscribe();
-  }, [session?.user?.id]);
+  }, [session?.user?.email]);
 
   return { fcmToken };
 };

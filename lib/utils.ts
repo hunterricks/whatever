@@ -23,6 +23,18 @@ export function isPWA() {
   return (
     window.matchMedia('(display-mode: standalone)').matches ||
     window.matchMedia('(display-mode: fullscreen)').matches ||
+    // @ts-ignore
+    (window.navigator as any).standalone === true
+  );
+}
+
+export function isStandalone() {
+  if (typeof window === 'undefined') return false;
+
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.matchMedia('(display-mode: fullscreen)').matches ||
+    // @ts-ignore
     (window.navigator as any).standalone === true
   );
 }

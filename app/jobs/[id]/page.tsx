@@ -11,24 +11,53 @@ import { toast } from "sonner";
 import Link from 'next/link';
 import Messaging from '@/components/Messaging';
 
-export default function JobDetails() {
+interface Job {
+  _id: string;
+  title: string;
+  description: string;
+  budget: number;
+  location: string;
+  timeline: string;
+  status: string;
+  postedBy: string;
+  postedByName: string;
+}
+
+interface Proposal {
+  _id: string;
+  status: string;
+  coverLetter: string;
+  price: number;
+  estimatedDuration: string;
+  serviceProvider: {
+    _id: string;
+    name: string;
+  };
+}
+
+export default function JobPage() {
   const { id } = useParams();
   const { user, checkAuth } = useAuth();
   const router = useRouter();
-  const [job, setJob] = useState(null);
-  const [proposal, setProposal] = useState(null);
-  const [proposals, setProposals] = useState([]);
+  const [job, setJob] = useState<Job | null>(null);
+  const [proposal, setProposal] = useState<Proposal | null>(null);
+  const [proposals, setProposals] = useState<Proposal[]>([]);
 
   useEffect(() => {
     if (!checkAuth()) {
       router.push('/login');
       return;
     }
-    fetchJobDetails();
-    if (user?.role === 'contractor') {
-      fetchMyProposal();
-    } else if (user?.role === 'homeowner') {
-      fetchAllProposals();
+    if (id && typeof id === 'string') {
+      fetchJobDetails();
+      if (user?.activeRole === 'contractor') {
+        fetchMyProposal();
+      } else if (user?.activeRole === 'homeowner') {
+        fetchAllProposals();
+      }
+    } else {
+      toast.error("Invalid job ID");
+      router.push('/browse-jobs');
     }
   }, [id, user, router, checkAuth]);
 
@@ -36,7 +65,7 @@ export default function JobDetails() {
     try {
       const response = await fetch(`/api/jobs/${id}`);
       if (!response.ok) throw new Error('Failed to fetch job details');
-      const data = await response.json();
+      const data: Job = await response.json();
       setJob(data);
     } catch (error) {
       toast.error("Error fetching job details");
@@ -45,9 +74,9 @@ export default function JobDetails() {
 
   const fetchMyProposal = async () => {
     try {
-      const response = await fetch(`/api/proposals?jobId=${id}&serviceProvider=${user.id}`);
+      const response = await fetch(`/api/proposals?jobId=${id}&serviceProvider=${user?.id}`);
       if (!response.ok) throw new Error('Failed to fetch proposal');
-      const data = await response.json();
+      const data: Proposal[] = await response.json();
       if (data.length > 0) {
         setProposal(data[0]);
       }
@@ -60,7 +89,7 @@ export default function JobDetails() {
     try {
       const response = await fetch(`/api/proposals?jobId=${id}`);
       if (!response.ok) throw new Error('Failed to fetch proposals');
-      const data = await response.json();
+      const data: Proposal[] = await response.json();
       setProposals(data);
     } catch (error) {
       toast.error("Error fetching proposals");
@@ -87,10 +116,10 @@ export default function JobDetails() {
   };
 
   const canMessage = () => {
-    if (user?.role === 'homeowner' && job?.postedBy === user.id) {
+    if (user?.activeRole === 'homeowner' && job?.postedBy === user.id) {
       return true;
     }
-    if (user?.role === 'contractor' && proposal?.status === 'accepted') {
+    if (user?.activeRole === 'contractor' && proposal?.status === 'accepted') {
       return true;
     }
     return false;
@@ -114,14 +143,14 @@ export default function JobDetails() {
       <Tabs defaultValue="details" className="space-y-4">
         <TabsList>
           <TabsTrigger value="details">Details</TabsTrigger>
-          {user?.role === 'homeowner' && <TabsTrigger value="proposals">Proposals</TabsTrigger>}
+          {user?.activeRole === 'homeowner' && <TabsTrigger value="proposals">Proposals</TabsTrigger>}
           {canMessage() && <TabsTrigger value="messages">Messages</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="details">
           <Card>
             <CardContent className="pt-6">
-              {user?.role === 'contractor' && job.status === 'open' && !proposal && (
+              {user?.activeRole === 'contractor' && job.status === 'open' && !proposal && (
                 <Button asChild>
                   <Link href={`/jobs/${id}/submit-proposal`}>Submit Proposal</Link>
                 </Button>
@@ -141,7 +170,7 @@ export default function JobDetails() {
           </Card>
         </TabsContent>
 
-        {user?.role === 'homeowner' && (
+        {user?.activeRole === 'homeowner' && (
           <TabsContent value="proposals">
             <Card>
               <CardHeader>
@@ -188,8 +217,12 @@ export default function JobDetails() {
               <CardContent className="p-0">
                 <Messaging
                   jobId={job._id}
-                  otherUserId={user.role === 'homeowner' ? proposal?.serviceProvider._id : job.postedBy}
-                  otherUserName={user.role === 'homeowner' ? proposal?.serviceProvider.name : job.postedByName}
+                  otherUserId={user?.activeRole === 'homeowner' 
+                    ? proposal?.serviceProvider._id ?? '' 
+                    : job.postedBy ?? ''}
+                  otherUserName={user?.activeRole === 'homeowner' 
+                    ? proposal?.serviceProvider.name ?? 'Contractor' 
+                    : job.postedByName ?? 'Homeowner'}
                 />
               </CardContent>
             </Card>

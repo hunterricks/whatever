@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, UseFormReturn, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { Progress } from "@/components/ui/progress";
 import { useRouter } from 'next/navigation';
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { formSchema } from './formSchema';
 
 // Import step components
 import TitleStep from "./components/TitleStep";
@@ -30,45 +31,6 @@ import ExperienceStep from "./components/ExperienceStep";
 import PaymentStep from "./components/PaymentStep";
 import DescriptionStep from "./components/DescriptionStep";
 import ReviewStep from "./components/ReviewStep";
-
-const formSchema = z.object({
-  title: z.string().min(10, {
-    message: "Title must be at least 10 characters.",
-  }),
-  category: z.string({
-    required_error: "Please select a category.",
-  }),
-  location: z.string().min(1, {
-    message: "Please specify a location.",
-  }),
-  skills: z.array(z.string()).min(1, {
-    message: "Please select at least one required skill.",
-  }),
-  scope: z.enum(["small", "medium", "large"], {
-    required_error: "Please select a project scope.",
-  }),
-  duration: z.enum(["1-3", "3-6", "6+"], {
-    required_error: "Please select a project duration.",
-  }),
-  experienceLevel: z.enum(["entry", "intermediate", "expert"], {
-    required_error: "Please select required experience level.",
-  }),
-  budgetType: z.enum(["fixed", "hourly"]),
-  budget: z.number().optional(),
-  minHourlyRate: z.number().optional(),
-  maxHourlyRate: z.number().optional(),
-  estimatedHours: z.number().optional(),
-  useMilestones: z.boolean().default(false),
-  milestones: z.array(
-    z.object({
-      name: z.string(),
-      budget: z.number(),
-    })
-  ).optional(),
-  description: z.string().min(50, {
-    message: "Description must be at least 50 characters.",
-  }),
-});
 
 const STEPS = [
   { title: "Title", component: TitleStep },
@@ -172,7 +134,7 @@ export default function PostJob() {
   const progress = (step / STEPS.length) * 100;
 
   const nextStep = async () => {
-    const fields = getFieldsForStep(step);
+    const fields = getFieldsForStep(step) as (keyof z.infer<typeof formSchema>)[];
     const isValid = await form.trigger(fields);
     
     if (isValid) {
@@ -188,7 +150,7 @@ export default function PostJob() {
     }
   };
 
-  const getFieldsForStep = (stepNumber: number) => {
+  const getFieldsForStep = (stepNumber: number): (keyof z.infer<typeof formSchema>)[] => {
     switch (stepNumber) {
       case 1: return ["title"];
       case 2: return ["category", "location"];

@@ -1,4 +1,5 @@
+   # Keep this line if it's in the file
+   **/.DS_Store
+   
+   # Add any other entries that were causing conflicts
 node_modules
-.next
-
-**/.DS_Store

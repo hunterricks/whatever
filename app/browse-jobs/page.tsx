@@ -18,8 +18,21 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { useRouter } from 'next/navigation';
 
-export default function BrowseJobs() {
-  const [jobs, setJobs] = useState([]);
+interface Job {
+  _id: string;
+  title: string;
+  description: string;
+  budget: number;
+  category: string;
+  status: string;
+  location: string;
+  duration: number;
+  postedBy: string;
+  createdAt: string;
+}
+
+const BrowseJobsPage: React.FC = () => {
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -64,7 +77,7 @@ export default function BrowseJobs() {
       });
       const response = await fetch(`/api/jobs?${queryParams}`);
       if (!response.ok) throw new Error('Failed to fetch jobs');
-      const data = await response.json();
+      const data: Job[] = await response.json();
       setJobs(data);
     } catch (error) {
       console.error('Error fetching jobs:', error);
@@ -161,4 +174,6 @@ export default function BrowseJobs() {
       )}
     </div>
   );
-}
+};
+
+export default BrowseJobsPage;

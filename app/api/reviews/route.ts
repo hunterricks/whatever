@@ -1,18 +1,18 @@
 import { NextResponse } from 'next/server';
-import { getToken } from "next-auth/jwt";
+import jwt from 'jsonwebtoken';
 import dbConnect from '@/lib/mongodb';
 import Review from '@/models/Review';
 import Job from '@/models/Job';
 import { NextRequest } from 'next/server';
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]/route";
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const token = request.cookies.get('auth-token')?.value;
+    if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
 
     await dbConnect();
     const body = await request.json();
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     const review = await Review.create({
       ...body,
-      reviewer: session.user.id,
+      reviewer: decoded.userId,
     });
 
     return NextResponse.json(review, { status: 201 });
@@ -40,10 +40,12 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const token = await getToken({ req: request });
+    const token = request.cookies.get('auth-token')?.value;
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    jwt.verify(token, process.env.JWT_SECRET!);
 
     await dbConnect();
     const { searchParams } = new URL(request.url);
@@ -60,3 +62,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Error fetching reviews' }, { status: 500 });
   }
 }
+
+
+

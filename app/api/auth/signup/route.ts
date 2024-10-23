@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 
@@ -26,9 +27,30 @@ export async function POST(request: Request) {
 
     console.log('New user created:', newUser._id);
 
-    return NextResponse.json({ message: 'User created successfully', userId: newUser._id }, { status: 201 });
+    const token = jwt.sign(
+      { userId: newUser._id, email: newUser.email },
+      process.env.JWT_SECRET!,
+      { expiresIn: '1d' }
+    );
+
+    const response = NextResponse.json(
+      { message: 'User created successfully', userId: newUser._id },
+      { status: 201 }
+    );
+
+    // Set the token as an HTTP-only cookie
+    response.cookies.set('auth-token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV !== 'development',
+      sameSite: 'strict',
+      maxAge: 86400, // 1 day in seconds
+      path: '/',
+    });
+
+    return response;
   } catch (error) {
     console.error('Signup error:', error);
-    return NextResponse.json({ error: 'Error creating user', details: error.message }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return NextResponse.json({ error: 'Error creating user', details: errorMessage }, { status: 500 });
   }
 }

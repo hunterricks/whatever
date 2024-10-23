@@ -57,9 +57,9 @@ export default function MyProposals() {
   };
 
   const getStatusBadge = (status: Proposal['status']) => {
-    const variants = {
+    const variants: Record<Proposal['status'], "secondary" | "default" | "destructive"> = {
       pending: 'secondary',
-      accepted: 'success',
+      accepted: 'default',
       rejected: 'destructive'
     };
     
