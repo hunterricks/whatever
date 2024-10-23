@@ -5,7 +5,7 @@ import Review from '@/models/Review';
 import Job from '@/models/Job';
 import { NextRequest } from 'next/server';
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(request: NextRequest) {
   try {
