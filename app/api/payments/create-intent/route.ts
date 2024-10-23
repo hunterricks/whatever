@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getToken } from "next-auth/jwt";
+import jwt from 'jsonwebtoken';
 import dbConnect from '@/lib/mongodb';
 import Job from '@/models/Job';
 import stripe from '@/lib/stripe';
@@ -7,10 +7,12 @@ import { NextRequest } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const token = await getToken({ req: request });
+    const token = request.cookies.get('auth-token')?.value;
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
 
     await dbConnect();
     const { jobId, amount } = await request.json();
@@ -20,7 +22,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Job not found' }, { status: 404 });
     }
 
-    if (job.postedBy.toString() !== token.sub) {
+    if (job.postedBy.toString() !== decoded.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

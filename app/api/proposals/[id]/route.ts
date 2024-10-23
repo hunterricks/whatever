@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import jwt from 'jsonwebtoken';
 import dbConnect from '@/lib/mongodb';
 import Proposal from '@/models/Proposal';
 import Job from '@/models/Job';
@@ -9,6 +10,13 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const token = request.cookies.get('auth-token')?.value;
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET!);
+
     await dbConnect();
     const proposal = await Proposal.findById(params.id)
       .populate('job')
@@ -33,6 +41,13 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    const token = request.cookies.get('auth-token')?.value;
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET!);
+
     await dbConnect();
     const body = await request.json();
     const { status } = body;

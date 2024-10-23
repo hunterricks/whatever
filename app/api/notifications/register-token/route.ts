@@ -1,19 +1,22 @@
 import { NextResponse } from 'next/server';
-import { getToken } from "next-auth/jwt";
+import jwt from 'jsonwebtoken';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
+import { NextRequest } from 'next/server';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const token = await getToken({ req: request });
+    const token = request.cookies.get('auth-token')?.value;
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+
     await dbConnect();
     const { fcmToken } = await request.json();
 
-    await User.findByIdAndUpdate(token.sub, {
+    await User.findByIdAndUpdate(decoded.userId, {
       $addToSet: { fcmTokens: fcmToken },
     });
 

@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create job object with required fields
-    const jobData = {
+    const jobData: any = {
       title: body.title,
       description: body.description,
       category: body.category,
@@ -36,6 +36,9 @@ export async function POST(request: NextRequest) {
       status: 'open',
       paymentStatus: 'pending',
       budgetType: body.budgetType,
+      budget: undefined,
+      minHourlyRate: undefined,
+      maxHourlyRate: undefined,
     };
 
     // Add budget fields based on budget type
@@ -98,7 +101,7 @@ export async function GET(request: Request) {
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
     
-    let query: any = { status };
+    const query: any = { status };
     
     if (category) query.category = category;
     if (location) query.location = { $regex: location, $options: 'i' };
@@ -119,3 +122,4 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Error fetching jobs' }, { status: 500 });
   }
 }
+

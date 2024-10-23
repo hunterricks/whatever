@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import jwt from 'jsonwebtoken';
 import dbConnect from '@/lib/mongodb';
 import Proposal from '@/models/Proposal';
 import Job from '@/models/Job';
@@ -6,6 +7,13 @@ import { NextRequest } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
+    const token = request.cookies.get('auth-token')?.value;
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+
     await dbConnect();
     const body = await request.json();
 
@@ -21,7 +29,7 @@ export async function POST(request: NextRequest) {
     // Check if the contractor has already submitted a proposal
     const existingProposal = await Proposal.findOne({
       job: body.jobId,
-      serviceProvider: body.serviceProvider,
+      serviceProvider: decoded.userId,
     });
 
     if (existingProposal) {
@@ -34,6 +42,7 @@ export async function POST(request: NextRequest) {
     const newProposal = await Proposal.create({
       ...body,
       job: body.jobId,
+      serviceProvider: decoded.userId,
       status: 'pending',
       createdAt: new Date(),
     });
@@ -55,9 +64,9 @@ export async function GET(request: NextRequest) {
     const jobId = searchParams.get('jobId');
     const serviceProvider = searchParams.get('serviceProvider');
 
-    let query = {};
-    if (jobId) query = { ...query, job: jobId };
-    if (serviceProvider) query = { ...query, serviceProvider };
+    const query: Record<string, unknown> = {};
+    if (jobId) query.job = jobId;
+    if (serviceProvider) query.serviceProvider = serviceProvider;
 
     const proposals = await Proposal.find(query)
       .populate('job', 'title')

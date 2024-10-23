@@ -20,17 +20,17 @@ export default function Home() {
 
       <section className="grid md:grid-cols-3 gap-8 mb-16">
         <div className="text-center">
-          <Image src="https://source.unsplash.com/random/300x200?home" alt="Post a job" width={300} height={200} className="rounded-lg mb-4" />
+          <Image src="/images/post-job.jpg" alt="Person posting a job on a laptop" width={300} height={200} className="rounded-lg mb-4" />
           <h2 className="text-2xl font-semibold mb-2">Post a Job</h2>
           <p>Describe your project and receive proposals from qualified professionals</p>
         </div>
         <div className="text-center">
-          <Image src="https://source.unsplash.com/random/300x200?worker" alt="Find talent" width={300} height={200} className="rounded-lg mb-4" />
+          <Image src="/images/find-talent.jpg" alt="Professional worker with tools" width={300} height={200} className="rounded-lg mb-4" />
           <h2 className="text-2xl font-semibold mb-2">Find Talent</h2>
           <p>Browse through a pool of skilled service providers for your specific needs</p>
         </div>
         <div className="text-center">
-          <Image src="https://source.unsplash.com/random/300x200?payment" alt="Secure payments" width={300} height={200} className="rounded-lg mb-4" />
+          <Image src="/images/secure-payment.jpg" alt="Secure online payment illustration" width={300} height={200} className="rounded-lg mb-4" />
           <h2 className="text-2xl font-semibold mb-2">Secure Payments</h2>
           <p>Use our escrow system for safe and guaranteed transactions</p>
         </div>

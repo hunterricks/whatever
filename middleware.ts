@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import jwt from 'jsonwebtoken';
 
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get('auth-token')?.value;
@@ -25,5 +26,37 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Verify JWT for API routes
+  if (request.nextUrl.pathname.startsWith('/api') && token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!);
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set('user', JSON.stringify(decoded));
+
+      return NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      });
+    } catch (_error) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+  }
+
   return NextResponse.next();
 }
+
+export const config = {
+  matcher: [
+    '/api/:path*',
+    '/dashboard/:path*',
+    '/profile/:path*',
+    '/post-job/:path*',
+    '/browse-jobs/:path*',
+    '/my-jobs/:path*',
+    '/my-proposals/:path*',
+    '/messages/:path*',
+    '/login',
+    '/signup',
+  ],
+};

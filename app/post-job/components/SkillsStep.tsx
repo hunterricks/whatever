@@ -12,7 +12,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
-import { useFormContext } from "react-hook-form";
+import { UseFormReturn } from "react-hook-form";
+import * as z from "zod";
+import { formSchema } from '../formSchema';
 
 // Mock skills data - in a real app, this would come from an API
 const popularSkills = [
@@ -28,9 +30,10 @@ const popularSkills = [
   "Roofing",
 ];
 
-export default function SkillsStep() {
+const SkillsStep: React.FC<{ form: UseFormReturn<z.infer<typeof formSchema>> }> = ({ form }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const form = useFormContext();
+  const { control, setValue } = form;
+  
   const selectedSkills = form.watch("skills") || [];
 
   const filteredSkills = popularSkills.filter(
@@ -41,24 +44,24 @@ export default function SkillsStep() {
 
   const addSkill = (skill: string) => {
     if (selectedSkills.length < 10) {
-      form.setValue("skills", [...selectedSkills, skill]);
+      setValue("skills", [...selectedSkills, skill]);
       setSearchTerm("");
     }
   };
 
   const removeSkill = (skillToRemove: string) => {
-    form.setValue(
+    setValue(
       "skills",
-      selectedSkills.filter((skill) => skill !== skillToRemove)
+      selectedSkills.filter((skill: string) => skill !== skillToRemove)
     );
   };
 
   return (
     <div className="space-y-6">
       <FormField
-        control={form.control}
+        control={control}
         name="skills"
-        render={() => (
+        render={({ field }) => (
           <FormItem>
             <FormLabel>Required Skills</FormLabel>
             <FormControl>
@@ -82,7 +85,7 @@ export default function SkillsStep() {
                   </div>
                 )}
                 <div className="flex flex-wrap gap-2">
-                  {selectedSkills.map((skill) => (
+                  {selectedSkills.map((skill: string) => (
                     <Badge
                       key={skill}
                       variant="secondary"
@@ -128,4 +131,6 @@ export default function SkillsStep() {
       )}
     </div>
   );
-}
+};
+
+export default SkillsStep;

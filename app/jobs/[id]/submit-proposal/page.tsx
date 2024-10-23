@@ -49,7 +49,7 @@ export default function SubmitProposal() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!checkAuth() || user?.role !== 'contractor') {
+    if (!checkAuth() || user?.activeRole !== 'contractor') {
       toast.error("You must be logged in as a contractor to submit proposals");
       return;
     }
@@ -81,7 +81,7 @@ export default function SubmitProposal() {
     }
   }
 
-  if (!checkAuth() || user?.role !== 'contractor') {
+  if (!checkAuth() || user?.activeRole !== 'contractor') {
     return null;
   }
 
