@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Job from '@/models/Job';
 import '../../../models/User';  // This ensures the User model is registered
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { Types } from 'mongoose';
 
 export async function POST(request: Request) {

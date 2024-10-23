@@ -2,8 +2,7 @@
   "/page": "app/page.js",
   "/not-found": "app/not-found.js",
   "/browse-jobs/page": "app/browse-jobs/page.js",
-  "/login/page": "app/login/page.js",
-  "/dashboard/contractor/page": "app/dashboard/contractor/page.js",
+  "/api/jobs/route": "app/api/jobs/route.js",
   "/dashboard/homeowner/page": "app/dashboard/homeowner/page.js",
-  "/api/jobs/route": "app/api/jobs/route.js"
+  "/dashboard/contractor/page": "app/dashboard/contractor/page.js"
 }
