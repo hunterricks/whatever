@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getToken } from "next-auth/jwt";
 import dbConnect from '@/lib/mongodb';
 import Review from '@/models/Review';
 import Job from '@/models/Job';
@@ -36,6 +37,11 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
+    const token = await getToken({ req: request });
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     await dbConnect();
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');

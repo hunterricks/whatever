@@ -1,27 +1,28 @@
 import { NextResponse } from 'next/server';
+import { getToken } from "next-auth/jwt";
 import dbConnect from '@/lib/mongodb';
 import Job from '@/models/Job';
 
 export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const token = await getToken({ req: request });
+    if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     await dbConnect();
 
-    const totalJobsPosted = await Job.countDocuments({ postedBy: session.user.id });
-    const totalJobsCompleted = await Job.countDocuments({ postedBy: session.user.id, status: 'completed' });
+    const totalJobsPosted = await Job.countDocuments({ postedBy: token.sub });
+    const totalJobsCompleted = await Job.countDocuments({ postedBy: token.sub, status: 'completed' });
 
     const aggregateResult = await Job.aggregate([
-      { $match: { postedBy: session.user.id } },
+      { $match: { postedBy: token.sub } },
       { $group: { _id: null, averageBudget: { $avg: "$budget" } } }
     ]);
     const averageJobBudget = aggregateResult[0]?.averageBudget || 0;
 
     const jobsByCategory = await Job.aggregate([
-      { $match: { postedBy: session.user.id } },
+      { $match: { postedBy: token.sub } },
       { $group: { _id: "$category", count: { $sum: 1 } } },
       { $project: { category: "$_id", count: 1, _id: 0 } }
     ]);
