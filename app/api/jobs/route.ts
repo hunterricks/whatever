@@ -3,9 +3,9 @@ import dbConnect from '@/lib/mongodb';
 import Job from '@/models/Job';
 import '../../../models/User';  // This ensures the User model is registered
 import { Types } from 'mongoose';
-import { NextApiRequest } from 'next/types';
+import { NextRequest } from 'next/server';
 
-export async function POST(request: NextApiRequest) {
+export async function POST(request: NextRequest) {
   try {
     await dbConnect();
     const body = await request.json();
@@ -52,22 +52,11 @@ export async function POST(request: NextApiRequest) {
     }
 
     // Handle postedBy field
-    if (body.postedBy && body.postedBy.startsWith('mock-')) {
-      // For mock data, use a valid ObjectId
-      jobData.postedBy = new Types.ObjectId();
-    } else if (body.postedBy) {
-      // For real data, attempt to convert to ObjectId
-      try {
-        jobData.postedBy = new Types.ObjectId(body.postedBy);
-      } catch (error) {
-        return NextResponse.json(
-          { error: 'Invalid postedBy ID' },
-          { status: 400 }
-        );
-      }
+    if (body.postedBy && Types.ObjectId.isValid(body.postedBy)) {
+      jobData.postedBy = body.postedBy;
     } else {
       return NextResponse.json(
-        { error: 'Missing postedBy field' },
+        { error: 'Invalid postedBy ID' },
         { status: 400 }
       );
     }
@@ -75,12 +64,10 @@ export async function POST(request: NextApiRequest) {
     console.log('Creating job with data:', jobData); // Debug log
 
     // Save the job to the database
-    const job = new Job(jobData);
-    const savedJob = await job.save();
-    
-    console.log('Job created successfully:', savedJob); // Debug log
+    const newJob = await Job.create(jobData);
+    console.log('New job created:', newJob._id);
 
-    return NextResponse.json(savedJob, { status: 201 });
+    return NextResponse.json(newJob, { status: 201 });
   } catch (error: any) {
     console.error('Error creating job:', error);
     

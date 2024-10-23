@@ -10,17 +10,14 @@ export async function POST(request: Request) {
 
     console.log('Received sign-up request:', { name, email });
 
-    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       console.log('User already exists:', email);
       return NextResponse.json({ error: 'User already exists' }, { status: 400 });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
     const newUser = await User.create({
       name,
       email,

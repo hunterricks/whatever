@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Proposal from '@/models/Proposal';
 import Job from '@/models/Job';
-import { NextApiRequest } from 'next/types';
+import { NextRequest } from 'next/server';
 
 export async function GET(
-  request: NextApiRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -29,7 +29,7 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: NextApiRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -43,12 +43,10 @@ export async function PATCH(
     }
 
     if (status === 'accepted') {
-      // Update the job status when a proposal is accepted
       await Job.findByIdAndUpdate(proposal.job, {
         status: 'in_progress',
       });
 
-      // Reject all other proposals for this job
       await Proposal.updateMany(
         {
           job: proposal.job,

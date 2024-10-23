@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Proposal from '@/models/Proposal';
 import Job from '@/models/Job';
-import { NextApiRequest } from 'next/types';
+import { NextRequest } from 'next/server';
 
-export async function POST(request: NextApiRequest) {
+export async function POST(request: NextRequest) {
   try {
     await dbConnect();
     const body = await request.json();
@@ -48,7 +48,7 @@ export async function POST(request: NextApiRequest) {
   }
 }
 
-export async function GET(request: NextApiRequest) {
+export async function GET(request: NextRequest) {
   try {
     await dbConnect();
     const { searchParams } = new URL(request.url);

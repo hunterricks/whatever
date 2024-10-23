@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import { getToken } from "next-auth/jwt";
 import dbConnect from '@/lib/mongodb';
 import Job from '@/models/Job';
-import { NextApiRequest } from 'next/types';
+import { NextRequest } from 'next/server';
 
-export async function GET(request: NextApiRequest) {
+export async function GET(request: NextRequest) {
   try {
     const token = await getToken({ req: request });
     if (!token) {
